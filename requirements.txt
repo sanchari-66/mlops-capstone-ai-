@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+numpy
+scikit-learn
+matplotlib
+pypmml
+pandas
+joblib
+pytest
+requests
+pyyaml
+python-dotenv
+autopep8
+flake8
+gunicorn
+daphne
