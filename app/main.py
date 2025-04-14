@@ -1,34 +1,35 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from pypmml import Model
-import numpy as np
 
+import logging
+import sys
+import os
+
+# Add src directory to the Python path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), r"C:\Users\basin\Dropbox\capstone_project_5\mlops-capstone-ai\src")))
+
+# Import the prediction function
+from predict import prediction
+from schemas import InputData
+
+import logging
+logging.getLogger("py4j").setLevel(logging.WARNING)
+
+#logging.basicConfig(level=logging.DEBUG)
 app = FastAPI()
 
-# Load the model
-try:
-    model = Model.load(r"C:\Users\basin\Dropbox\capstone_project_5\mlops-capstone-ai\src\model.pmml")  # Replace with correct path
-except Exception as e:
-    raise RuntimeError(f"Error loading model: {e}")
-
-class InputData(BaseModel):
-    features: list[float]  # Specify that the list should contain floats
-
-expected_feature_count = 10  # Replace with your model's expected number of features
+@app.get("/")
+def root():
+    return {"message": "Welcome to the FastAPI application!"}
 
 @app.post("/predict")
-def predict(data: InputData):
+def predict_endpoint(data: InputData):
     try:
-        # Validate input length
-        if len(data.features) != expected_feature_count:
-            raise HTTPException(status_code=400, detail="Invalid input dimensions")
-
-        # Prepare the input array
-        input_array = np.array(data.features).reshape(1, -1)
-
-        # Perform prediction
-        prediction = model.predict({"input": input_array.tolist()})
-        return {"prediction": prediction}
-
+        logging.debug(f"Received input: {data.features}")
+        result = prediction(data)
+        return {"prediction": result}
+    except HTTPException as http_exc:
+        logging.error(f"HTTPException: {http_exc.detail}")
+        raise http_exc
     except Exception as e:
+        logging.error(f"Error during prediction: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
